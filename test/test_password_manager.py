@@ -136,15 +136,16 @@ class Testget_secret_ids:
     @mock_aws
     @mark.it("Returns names of parameters added to SSM")
     def test_1(self, ssm_client, test_pm):
+        ssm_dir = "/passwordmgr/"
         test_passwords = [
             {
-                "Name": "/passwordmgr/secret_password",
+                "Name": f"{ssm_dir}secret_password",
                 "Value": "matthew",
                 "Type": "String",
                 "Overwrite": True,
             },
             {
-                "Name": "/passwordmgr/secreter_password",
+                "Name": f"{ssm_dir}secreter_password",
                 "Value": "matthewer",
                 "Type": "String",
                 "Overwrite": True,

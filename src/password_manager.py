@@ -4,9 +4,10 @@ from os import getenv
 
 
 class PasswordManager:
+    ssm_dir = "/passwordmgr/"
+
     def __init__(self):
         self.ssm_client = client("ssm", getenv("AWS_DEFAULT_REGION"))
-        self.ssm_dir = "/passwordmgr/"
         self.running = False
 
     def main_loop(self):
@@ -66,12 +67,12 @@ class PasswordManager:
                 {
                     "Key": "Name",
                     "Option": "BeginsWith",
-                    "Values": [self.ssm_dir],
+                    "Values": [PasswordManager.ssm_dir],
                 }
             ]
         )
         return [
-            parameter["Name"][len(self.ssm_dir) :]
+            parameter["Name"][len(PasswordManager.ssm_dir) :]
             for parameter in id_list["Parameters"]
         ]
 
