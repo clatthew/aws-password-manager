@@ -22,3 +22,33 @@ class Testmenu:
             with patch(f"{PATCH_PATH}{func_name}") as mock:
                 menu()
                 mock.assert_called_once()
+
+    @mark.it("Menu function displays correct options message")
+    def test_intro_message(self, capfd):
+        with patch(f"{PATCH_PATH}input", return_value="x"):
+            menu()
+        captured = capfd.readouterr()
+        expected = (
+            "Please specify [e]ntry, [r]etrieval, [d]eletion, [l]isting or e[x]it:"
+        )
+        result = captured.out[: len(expected)]
+        assert result == expected
+
+    @mark.it(
+        "Entering invalid input causes next options message to begin with Invalid input."
+    )
+    def test_invalid(self, capfd):
+        with patch(f"{PATCH_PATH}input", return_value="y"):
+            menu()
+        with patch(f"{PATCH_PATH}input", return_value="x"):
+            menu()
+        captured = capfd.readouterr()
+        std_message = (
+            "Please specify [e]ntry, [r]etrieval, [d]eletion, [l]isting or e[x]it:"
+        )
+        add_message = "Invalid input. "
+        expected = add_message + std_message
+        result = captured.out[
+            len(std_message) + 1 : len(std_message) + len(expected) + 1
+        ]
+        assert result == expected
