@@ -1,5 +1,4 @@
 from boto3 import client
-from mypy_boto3_ssm.client import SSMClient
 from os import getenv
 
 
