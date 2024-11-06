@@ -2,12 +2,13 @@ from boto3 import client
 from mypy_boto3_ssm.client import SSMClient
 from os import getenv
 
+
 class PasswordManager:
     def __init__(self):
         self.ssm_client = client("ssm", getenv("AWS_DEFAULT_REGION"))
         self.ssm_dir = "/passwordmgr/"
         self.running = False
-        
+
     def main_loop(self):
         self.running = True
         AUTHENTICATED = False
@@ -70,9 +71,10 @@ class PasswordManager:
             ]
         )
         return [
-            parameter["Name"][len(self.ssm_dir) :] for parameter in id_list["Parameters"]
+            parameter["Name"][len(self.ssm_dir) :]
+            for parameter in id_list["Parameters"]
         ]
-    
+
     def __call__(self):
         self.main_loop()
 

@@ -18,43 +18,36 @@ def aws_creds():
     environ["AWS_DEFAULT_REGION"] = "eu-west-2"
 
 
+@fixture
+def test_pm():
+    return PasswordManager()
+
+
 class Testmain_loop:
     @mark.it("Calls authentication function when first run")
-    def test_1(self):
-        pm = PasswordManager()
-        # with patch(f"{PATCH_PATH}menu", return_value=True):
-        with patch(f'pm.menu', return_value=True):
-            # with patch(f"{PATCH_PATH}authentication") as mock:
-            with patch(f'pm.authentication') as mock:
-                mock.return_value = True
-                pm.main_loop()
-                mock.assert_called_once()
-
-    # @patch.object(PasswordManager, 'menu', True)
-    # @patch.object(PasswordManager, 'authentication', True)
-    def test_3(self):
-        pm = PasswordManager()
-        with patch.object(pm, 'running', lambda: False) as mock1:
-            with patch.object(pm, 'authentication', lambda: True) as mock:
-                mock1.side_effect = [True, False]
-                pm.main_loop()
-                mock.assert_called_once()
+    def test_1(self, test_pm):
+        with patch(f"{PATCH_PATH}input", return_value="x"):
+            with patch(
+                f"{PATCH_PATH}PasswordManager.authentication", return_value=True
+            ) as mock_auth:
+                test_pm()
+                mock_auth.assert_called_once
 
     @mark.it("Calls authentication function repeatedly until it returns True")
-    def test_2(self):
-        with patch(f"{PATCH_PATH}menu", return_value=True):
-            with patch(f"{PATCH_PATH}authentication") as mock:
-                mock.side_effect = [False, False, False, True]
-                main_loop()
-                assert mock.call_count == 4
+    def test_4(self, test_pm):
+        with patch(f"{PATCH_PATH}input", return_value="x"):
+            with patch(f"{PATCH_PATH}PasswordManager.authentication") as mock_auth:
+                mock_auth.side_effect = [False, False, False, True]
+                test_pm()
+                assert mock_auth.call_count == 4
 
 
 class Testmenu:
     # Add a test for exit exiting the loop?
     @mark.it("Menu function displays correct options message")
-    def test_intro_message(self, capfd):
+    def test_intro_message(self, capfd, test_pm):
         with patch(f"{PATCH_PATH}input", return_value="x"):
-            menu()
+            test_pm.menu()
         captured = capfd.readouterr()
         expected = (
             "Please specify [e]ntry, [r]etrieval, [d]eletion, [l]isting or e[x]it:"
@@ -65,11 +58,11 @@ class Testmenu:
     @mark.it(
         "Entering invalid input causes next options message to begin with Invalid input."
     )
-    def test_invalid(self, capfd):
+    def test_invalid(self, capfd, test_pm):
         with patch(f"{PATCH_PATH}input", return_value="y"):
-            menu()
+            test_pm.menu()
         with patch(f"{PATCH_PATH}input", return_value="x"):
-            menu()
+            test_pm.menu()
         captured = capfd.readouterr()
         std_message = (
             "Please specify [e]ntry, [r]etrieval, [d]eletion, [l]isting or e[x]it:"
@@ -90,10 +83,10 @@ class Testmenu:
             ("x", "exit"),
         ],
     )
-    def test_inputs(self, option, func_name):
+    def test_inputs(self, option, func_name, test_pm):
         with patch(f"{PATCH_PATH}input", return_value=option):
-            with patch(f"{PATCH_PATH}{func_name}") as mock:
-                menu()
+            with patch(f"{PATCH_PATH}PasswordManager.{func_name}") as mock:
+                test_pm.menu()
                 mock.assert_called_once()
 
 
@@ -114,13 +107,15 @@ class Testlisting:
 
 
 class Testexit:
-    @mark.it("Returns False when called")
-    def test_1(self):
-        assert not exit()
+    @mark.it("Sets self.running to False when called")
+    def test_1(self, test_pm):
+        test_pm.running = True
+        test_pm.exit()
+        assert not test_pm.running
 
     @mark.it('Echoes "Thank you. Goodbye." to terminal')
-    def test_2(self, capfd):
-        exit()
+    def test_2(self, capfd, test_pm):
+        test_pm.exit()
         captured = capfd.readouterr().out
         assert captured == "Thank you. Goodbye.\n"
 
@@ -140,7 +135,7 @@ class Testget_secret_ids:
 
     @mock_aws
     @mark.it("Returns names of parameters added to SSM")
-    def test_1(self, ssm_client):
+    def test_1(self, ssm_client, test_pm):
         test_passwords = [
             {
                 "Name": "/passwordmgr/secret_password",
@@ -157,13 +152,15 @@ class Testget_secret_ids:
         ]
         for password in test_passwords:
             ssm_client.put_parameter(**password)
-        result = get_secret_ids(ssm_client)
+        with patch.object(test_pm, "ssm_client", ssm_client):
+            result = test_pm.get_secret_ids()
         assert result == ["secret_password", "secreter_password"]
 
     @mock_aws
     @mark.it("Returns empty list if no parameters have been added to SSM")
-    def test_2(self, ssm_client):
-        result = get_secret_ids(ssm_client)
+    def test_2(self, ssm_client, test_pm):
+        with patch.object(test_pm, "ssm_client", ssm_client):
+            result = test_pm.get_secret_ids()
         assert result == []
 
 
@@ -172,19 +169,5 @@ class Testssm_client:
     @mock_aws
     @mark.it("Returns instance of boto3 client")
     def test_1(self):
-        print(type(ssm_client))
-        assert isinstance(ssm_client(), SSMClient)
-
-
-class Testmeth2:
-    # @fixture
-    # def test_pm(self):
-    #     return PasswordManager()
-
-    # @patch.object(PasswordManager(), 'meth1', fake_bar)
-    def test_1(self):
-        def fake_bar():
-            return "goodbye"
-        pm = PasswordManager()
-        with patch.object(pm, 'meth1', fake_bar) as mock:
-            print(pm.meth2()())
+        print(type(test_pm.ssm_client))
+        assert isinstance(test_pm.ssm_client(), SSMClient)
