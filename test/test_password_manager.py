@@ -1,16 +1,4 @@
-from src.password_manager import (
-    main_loop,
-    menu,
-    entry,
-    retrieval,
-    deletion,
-    listing,
-    exit,
-    authentication,
-    check_credentials,
-    get_secret_ids,
-    ssm_client,
-)
+from src.password_manager import PasswordManager
 from pytest import mark, fixture
 from unittest.mock import patch
 from mypy_boto3_ssm.client import SSMClient
@@ -33,10 +21,23 @@ def aws_creds():
 class Testmain_loop:
     @mark.it("Calls authentication function when first run")
     def test_1(self):
-        with patch(f"{PATCH_PATH}menu", return_value=True):
-            with patch(f"{PATCH_PATH}authentication") as mock:
+        pm = PasswordManager()
+        # with patch(f"{PATCH_PATH}menu", return_value=True):
+        with patch(f'pm.menu', return_value=True):
+            # with patch(f"{PATCH_PATH}authentication") as mock:
+            with patch(f'pm.authentication') as mock:
                 mock.return_value = True
-                main_loop()
+                pm.main_loop()
+                mock.assert_called_once()
+
+    # @patch.object(PasswordManager, 'menu', True)
+    # @patch.object(PasswordManager, 'authentication', True)
+    def test_3(self):
+        pm = PasswordManager()
+        with patch.object(pm, 'running', lambda: False) as mock1:
+            with patch.object(pm, 'authentication', lambda: True) as mock:
+                mock1.side_effect = [True, False]
+                pm.main_loop()
                 mock.assert_called_once()
 
     @mark.it("Calls authentication function repeatedly until it returns True")
@@ -173,3 +174,17 @@ class Testssm_client:
     def test_1(self):
         print(type(ssm_client))
         assert isinstance(ssm_client(), SSMClient)
+
+
+class Testmeth2:
+    # @fixture
+    # def test_pm(self):
+    #     return PasswordManager()
+
+    # @patch.object(PasswordManager(), 'meth1', fake_bar)
+    def test_1(self):
+        def fake_bar():
+            return "goodbye"
+        pm = PasswordManager()
+        with patch.object(pm, 'meth1', fake_bar) as mock:
+            print(pm.meth2()())

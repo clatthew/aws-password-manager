@@ -4,3 +4,4 @@ ruff
 pytest
 pytest-testdox
 mypy-boto3-ssm
+testfixtures
