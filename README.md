@@ -1,43 +1,48 @@
 # Password manager
 Store and retrieve credentials stored in AWS.
-## Baisc behaviour
-
+## Basic behaviour
 ### Main loop
 ```python
-running = True
-AUTHENTICATED = False
-while running:
-    print("Please specify [e]ntry, [r]etrieval, [d]eletion, [l]isting or e[x]it:")
-    response = input(">>> "):
-    if response == 
-        ...
-    else:
-        print("Invalid input. ", end="")
+    running = True
+    AUTHENTICATED = False
+    while running:
+        if not AUTHENTICATED:
+            AUTHENTICATED = authentication()
+        else:
+            running = not menu()
 ```
+### Menu
 - if one of the allowed keys is entered, call the relevant function
 - if one of the non-allowed keys is entered, call invalid input function
-
+```python
+    print("Please specify [e]ntry, [r]etrieval, [d]eletion, [l]isting or e[x]it:")
+    response = input(">>> ")
+    match response:
+        case "e":
+            entry()
+        case "r":
+            retrieval()
+        case "d":
+            deletion()
+        case "l":
+            listing()
+        case "x":
+            return exit()
+        case _:  
+            print("Invalid input. ", end="")
+```
 ### Core functions
 
 #### Entry
 - ask for secret identifier, userid and password.
-- call authenticate function
-- if authentication returns `False`:
-    - Return to the main loop
 - request input of secretid and secret_value
 - confirmation message: `Secret saved.`
 #### Retrieval
-- call authetication function
-- if authentication returns `False`:
-    - Return to the main loop
 - retrive the requested secret from SSM/s3
 - write it to secrets.txt
 - confirmation message: `Secrets stored in file secrets.txt.`
 
 #### Deletion
-- call authetication function
-- if authentication returns `False`:
-    - Return to the main loop
 - request input of secretid
 - call get_secret_ids
 - if secretid not in get_secret_id response:
@@ -61,24 +66,18 @@ while running:
 #### Exit
 ```python
 print("Thank you. Goodbye.")
-running = False
+return True
 ```
 ### Utility functions
 
 #### Authentication
 Return `True` if the user has authenticated themself. Return `False` otherwise.
 ```python
-if AUTHENTICATED:
-    return AUTHENTICATED
 print("UserId":)
 user_id = input(">>> ")
 print("Password":)
 password = input(">>> ")
-if check_credentials(user_id, password):
-    AUTHENTICATED = True
-    return AUTHENTICATED
-print("Authentication failed")
-return False
+return check_credentials(user_id, password):
 ```
 
 #### Check credentials
@@ -95,3 +94,4 @@ Takes arguments userid and password. Compare these to the secrets stored in s3/S
 - authentication timeout after certain time
 - secret versioning
 - store username, password, url, website name etc together as a single entry
+- quit program after maximum number of authentication attempts reached
