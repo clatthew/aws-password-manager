@@ -87,7 +87,15 @@ class Testlisting:
 
 
 class Testexit:
-    pass
+    @mark.it("Returns False when called")
+    def test_1(self):
+        assert not exit()
+
+    @mark.it('Echoes "Thank you. Goodbye." to terminal')
+    def test_2(self, capfd):
+        exit()
+        captured = capfd.readouterr().out
+        assert captured == "Thank you. Goodbye.\n"
 
 
 class Testauthentication:
