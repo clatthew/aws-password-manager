@@ -21,6 +21,15 @@ from os import environ
 PATCH_PATH = "src.password_manager."
 
 
+@fixture(scope="session", autouse=True)
+def aws_creds():
+    environ["AWS_ACCESS_KEY_ID"] = "test"
+    environ["AWS_SECRET_ACCESS_KEY"] = "test"
+    environ["AWS_SECURITY_TOKEN"] = "test"
+    environ["AWS_SESSION_TOKEN"] = "test"
+    environ["AWS_DEFAULT_REGION"] = "eu-west-2"
+
+
 class Testmain_loop:
     @mark.it("Calls authentication function when first run")
     def test_1(self):
@@ -124,11 +133,11 @@ class Testcheck_credentials:
 
 
 class Testget_secret_ids:
-    @mock_aws
     @fixture
     def ssm_client(self):
         return client("ssm", environ["AWS_DEFAULT_REGION"])
 
+    @mock_aws
     @mark.it("Returns names of parameters added to SSM")
     def test_1(self, ssm_client):
         test_passwords = [
@@ -149,6 +158,12 @@ class Testget_secret_ids:
             ssm_client.put_parameter(**password)
         result = get_secret_ids(ssm_client)
         assert result == ["secret_password", "secreter_password"]
+
+    @mock_aws
+    @mark.it("Returns empty list if no parameters have been added to SSM")
+    def test_2(self, ssm_client):
+        result = get_secret_ids(ssm_client)
+        assert result == []
 
 
 class Testssm_client:

@@ -1,5 +1,5 @@
 boto3
-moto[s3]
+moto
 ruff
 pytest
 pytest-testdox
