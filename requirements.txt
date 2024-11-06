@@ -3,4 +3,4 @@ moto[s3]
 ruff
 pytest
 pytest-testdox
-
+mypy-boto3-ssm

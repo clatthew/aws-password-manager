@@ -1,3 +1,6 @@
+from boto3 import client
+from mypy_boto3_ssm.client import SSMClient
+
 def main_loop():
     running = True
     AUTHENTICATED = False
@@ -42,24 +45,28 @@ def listing():
     print("listing")
 
 
-def exit():
+def exit() -> bool:
     print("Thank you. Goodbye.")
     return False
 
 
-def authentication():
+def authentication() -> bool:
     print("enter password:")
     password = input(">>> ")
     if password == "hello":
         return True
 
 
-def check_credentials():
+def check_credentials() -> bool:
     pass
 
 
-def get_secret_ids():
+def get_secret_ids() -> list[str] | None:
     pass
+
+
+def ssm_client() -> SSMClient:
+    return client("ssm", "eu-west-2")
 
 
 if __name__ == "__main__":

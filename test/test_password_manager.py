@@ -1,9 +1,9 @@
-from src.password_manager import *
+from src.password_manager import main_loop, menu, entry, retrieval, deletion, listing, exit, authentication, check_credentials, get_secret_ids, ssm_client
 from pytest import mark
 from unittest.mock import patch
-
+from mypy_boto3_ssm.client import SSMClient
+from moto import mock_aws
 PATCH_PATH = "src.password_manager."
-
 
 class Testmain_loop:
     @mark.it("Calls authentication function when first run")
@@ -109,3 +109,12 @@ class Testcheck_credentials:
 
 class Testget_secret_ids:
     pass
+
+
+class Testssm_client:
+    @mark.xfail
+    @mock_aws
+    @mark.it("Returns instance of boto3 client")
+    def test_1(self):
+        print(type(ssm_client))
+        assert isinstance(ssm_client(), SSMClient)
