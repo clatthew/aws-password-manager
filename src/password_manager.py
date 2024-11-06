@@ -1,5 +1,7 @@
 from boto3 import client
 from mypy_boto3_ssm.client import SSMClient
+from os import getenv
+
 
 def main_loop():
     running = True
@@ -61,12 +63,24 @@ def check_credentials() -> bool:
     pass
 
 
-def get_secret_ids() -> list[str] | None:
-    pass
+def get_secret_ids(ssm_client) -> list[str] | None:
+    folder_prefix = "/passwordmgr/"
+    id_list = ssm_client.describe_parameters(
+        ParameterFilters=[
+            {
+                "Key": "Name",
+                "Option": "BeginsWith",
+                "Values": [folder_prefix],
+            }
+        ]
+    )
+    return [
+        parameter["Name"][len(folder_prefix) :] for parameter in id_list["Parameters"]
+    ]
 
 
 def ssm_client() -> SSMClient:
-    return client("ssm", "eu-west-2")
+    return client("ssm", getenv["AWS_DEFAULT_REGION"])
 
 
 if __name__ == "__main__":

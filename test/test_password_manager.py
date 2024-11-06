@@ -1,9 +1,25 @@
-from src.password_manager import main_loop, menu, entry, retrieval, deletion, listing, exit, authentication, check_credentials, get_secret_ids, ssm_client
-from pytest import mark
+from src.password_manager import (
+    main_loop,
+    menu,
+    entry,
+    retrieval,
+    deletion,
+    listing,
+    exit,
+    authentication,
+    check_credentials,
+    get_secret_ids,
+    ssm_client,
+)
+from pytest import mark, fixture
 from unittest.mock import patch
 from mypy_boto3_ssm.client import SSMClient
+from boto3 import client
 from moto import mock_aws
+from os import environ
+
 PATCH_PATH = "src.password_manager."
+
 
 class Testmain_loop:
     @mark.it("Calls authentication function when first run")
@@ -108,7 +124,31 @@ class Testcheck_credentials:
 
 
 class Testget_secret_ids:
-    pass
+    @mock_aws
+    @fixture
+    def ssm_client(self):
+        return client("ssm", environ["AWS_DEFAULT_REGION"])
+
+    @mark.it("Returns names of parameters added to SSM")
+    def test_1(self, ssm_client):
+        test_passwords = [
+            {
+                "Name": "/passwordmgr/secret_password",
+                "Value": "matthew",
+                "Type": "String",
+                "Overwrite": True,
+            },
+            {
+                "Name": "/passwordmgr/secreter_password",
+                "Value": "matthewer",
+                "Type": "String",
+                "Overwrite": True,
+            },
+        ]
+        for password in test_passwords:
+            ssm_client.put_parameter(**password)
+        result = get_secret_ids(ssm_client)
+        assert result == ["secret_password", "secreter_password"]
 
 
 class Testssm_client:
