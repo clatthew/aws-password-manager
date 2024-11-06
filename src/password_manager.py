@@ -43,7 +43,6 @@ class PasswordManager:
         print("entry")
         # Collect the secret info
         # use get_input
-        # Call another function to put the secret in sm
         secret = {
             'Name': f'{PasswordManager.sm_dir}string',
             'SecretString': """{
@@ -65,6 +64,10 @@ class PasswordManager:
     def deletion(self):
         # use get_input
         print("deletion")
+        secret_name = 'club_pengiun'
+        self.sm_client.delete_secret(
+            SecretId=secret_name
+        )
 
     def listing(self):
         # use get_input

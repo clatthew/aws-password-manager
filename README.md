@@ -1,6 +1,7 @@
 # Password manager
 Store and retrieve credentials stored in AWS.
 ## Basic behaviour
+Master password stored in secrets manager. Make a second script to allow the user to store a master password.
 ### Main loop
 ```python
     running = True
@@ -38,7 +39,7 @@ Store and retrieve credentials stored in AWS.
 - request input of secretid and secret_value
 - confirmation message: `Secret saved.`
 #### Retrieval
-- retrive the requested secret from SSM/s3
+- retrive the requested secret from secrets manager
 - write it to secrets.txt
 - confirmation message: `Secrets stored in file secrets.txt.`
 
@@ -51,7 +52,7 @@ Store and retrieve credentials stored in AWS.
         No secret found with id ...
         ```
     - return to the main loop
-- delete the secret from SSM/s3
+- delete the secret from secrets manager
 
 #### Listing
 - call get_secret_ids
@@ -81,14 +82,20 @@ return check_credentials(user_id, password):
 ```
 
 #### Check credentials
-Takes arguments userid and password. Compare these to the secrets stored in s3/SSM. Return `True` if they match, `False` otherwise.
+Takes arguments userid and password. Compare these to the secrets stored in secrets manager. Return `True` if they match, `False` otherwise.
 
 #### Get secret ids
 - call authentication function
 - if authentication returns `False`:
     - Return `None`
-- retrieve the names of credentials stored in SSM/s3
+- retrieve the names of credentials stored in secrets manager
 - return them
+
+#### get_user_input
+- show a message to the user and return their input
+
+#### get_value_from_sm
+- retrieve the requested 
 
 ## Future ideas
 - authentication timeout after certain time
