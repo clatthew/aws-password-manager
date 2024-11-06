@@ -68,3 +68,35 @@ class Testmenu:
             with patch(f"{PATCH_PATH}{func_name}") as mock:
                 menu()
                 mock.assert_called_once()
+
+
+class Testentry:
+    pass
+
+
+class Testretrieval:
+    pass
+
+
+class Testdeletion:
+    pass
+
+
+class Testlisting:
+    pass
+
+
+class Testexit:
+    pass
+
+
+class Testauthentication:
+    pass
+
+
+class Testcheck_credentials:
+    pass
+
+
+class Testget_secret_ids:
+    pass
