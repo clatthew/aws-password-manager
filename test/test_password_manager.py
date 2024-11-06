@@ -1,7 +1,6 @@
 from src.password_manager import PasswordManager
 from pytest import mark, fixture
 from unittest.mock import patch
-from mypy_boto3_ssm.client import SSMClient
 from boto3 import client
 from moto import mock_aws
 from os import environ

@@ -3,5 +3,4 @@ moto
 ruff
 pytest
 pytest-testdox
-mypy-boto3-ssm
-testfixtures
+mypy-boto3-secretsmanager

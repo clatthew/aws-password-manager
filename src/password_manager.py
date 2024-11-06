@@ -3,18 +3,18 @@ from os import getenv
 
 
 class PasswordManager:
-    ssm_dir = "/passwordmgr/"
+    sm_dir = "/passwordmgr/"
 
     def __init__(self):
-        self.ssm_client = client("ssm", getenv("AWS_DEFAULT_REGION"))
+        self.sm_client = client("secretsmanager", getenv("AWS_DEFAULT_REGION"))
         self.running = False
 
     def main_loop(self):
         self.running = True
-        AUTHENTICATED = False
+        authenticated = False
         while self.running:
-            if not AUTHENTICATED:
-                AUTHENTICATED = self.authentication()
+            if not authenticated:
+                authenticated = self.authentication()
             else:
                 self.menu()
 
@@ -41,14 +41,34 @@ class PasswordManager:
 
     def entry(self):
         print("entry")
+        # Collect the secret info
+        # use get_input
+        # Call another function to put the secret in sm
+        secret = {
+            'Name': f'{PasswordManager.sm_dir}string',
+            'SecretString': """{
+                'secret_name': ___,
+                'secret_password': ___
+            }""",
+            'ForceOverwriteReplicaSecret': True
+        }
+        self.sm_client.create_secret(secret)
 
     def retrieval(self):
         print("retrieval")
+        # use get_input
+        # secret_name = ...
+        # self.sm_client.get_secret_value(
+        #     SecretId=secret_name
+        # )['SecretString']
 
     def deletion(self):
+        # use get_input
         print("deletion")
 
     def listing(self):
+        # use get_input
+        # retrieve list from get_secret_ids
         print("listing")
 
     def exit(self) -> bool:
@@ -56,28 +76,33 @@ class PasswordManager:
         self.running = False
 
     def authentication(self) -> bool:
+        # use get_input
         print("enter password:")
         password = input(">>> ")
         if password == "hello":
             return True
+        
+    def get_input(self, message):
+        print(message)
+        return input(">>> ")
 
     def check_credentials(self) -> bool:
         pass
 
     def get_secret_ids(self) -> list[str]:
-        id_list = self.ssm_client.describe_parameters(
+        secret_list = self.sm_client.list_secrets(
             ParameterFilters=[
                 {
-                    "Key": "Name",
-                    "Option": "BeginsWith",
-                    "Values": [PasswordManager.ssm_dir],
+                    "Key": "name",
+                    "Values": [PasswordManager.sm_dir],
                 }
             ]
-        )
-        return [
-            parameter["Name"][len(PasswordManager.ssm_dir) :]
-            for parameter in id_list["Parameters"]
-        ]
+        )['SecretList']
+        return secret_list
+        # return [
+        #     parameter["Name"][len(PasswordManager.sm_dir) :]
+        #     for parameter in id_list["Parameters"]
+        # ]
 
     def __call__(self):
         self.main_loop()
