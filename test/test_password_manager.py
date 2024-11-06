@@ -49,6 +49,6 @@ class Testmenu:
         add_message = "Invalid input. "
         expected = add_message + std_message
         result = captured.out[
-            len(std_message) + 1 : len(std_message) + len(expected) + 1
+            len(std_message) + 1 : len(std_message + expected) + 1
         ]
         assert result == expected
