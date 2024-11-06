@@ -11,7 +11,6 @@ def main_loop():
 def menu():
     print("Please specify [e]ntry, [r]etrieval, [d]eletion, [l]isting or e[x]it:")
     response = input(">>> ")
-    print(f"response: {response}")
     match response:
         case "e":
             entry()
