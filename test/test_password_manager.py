@@ -14,6 +14,14 @@ class Testmain_loop:
                 main_loop()
                 mock.assert_called_once()
 
+    @mark.it("Calls authentication function repeatedly until it returns True")
+    def test_2(self):
+        with patch(f"{PATCH_PATH}menu", return_value=True):
+            with patch(f"{PATCH_PATH}authentication") as mock:
+                mock.side_effect = [False, False, False, True]
+                main_loop()
+                assert mock.call_count == 4
+
 
 class Testmenu:
     @mark.it("Menu function displays correct options message")
