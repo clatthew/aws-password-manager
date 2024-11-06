@@ -43,33 +43,33 @@ class Testmain_loop:
 
 
 class Testmenu:
+    @fixture
+    def menu_message(self):
+        return "Please specify \x1b[4me\x1b[0mntry, \x1b[4mr\x1b[0metrieval, \x1b[4md\x1b[0meletion, \x1b[4ml\x1b[0misting or e\x1b[4mx\x1b[0mit:"
+
     # Add a test for exit exiting the loop?
     @mark.it("Menu function displays correct options message")
-    def test_intro_message(self, capfd, test_pm):
+    def test_intro_message(self, capfd, test_pm, menu_message):
         with patch(f"{PATCH_PATH}input", return_value="x"):
             test_pm.menu()
         captured = capfd.readouterr()
-        expected = (
-            "Please specify [e]ntry, [r]etrieval, [d]eletion, [l]isting or e[x]it:"
-        )
-        result = captured.out[: len(expected)]
-        assert result == expected
+        result = captured.out[: len(menu_message)]
+        assert result == menu_message
 
     @mark.it(
         "Entering invalid input causes next options message to begin with Invalid input."
     )
-    def test_invalid(self, capfd, test_pm):
+    def test_invalid(self, capfd, test_pm, menu_message):
         with patch(f"{PATCH_PATH}input", return_value="y"):
             test_pm.menu()
         with patch(f"{PATCH_PATH}input", return_value="x"):
             test_pm.menu()
         captured = capfd.readouterr()
-        std_message = (
-            "Please specify [e]ntry, [r]etrieval, [d]eletion, [l]isting or e[x]it:"
-        )
         add_message = "Invalid input. "
-        expected = add_message + std_message
-        result = captured.out[len(std_message) + 1 : len(std_message + expected) + 1]
+        expected = add_message + menu_message
+        result = captured.out[
+            len(menu_message) + 1 : 2 * len(menu_message) + len(add_message) + 1
+        ]
         assert result == expected
 
     @mark.it("Entering input e, r, d, l or x calls the respective function:")

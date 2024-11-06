@@ -20,7 +20,11 @@ class PasswordManager:
                 self.menu()
 
     def menu(self):
-        print("Please specify [e]ntry, [r]etrieval, [d]eletion, [l]isting or e[x]it:")
+        start_ul = "\033[4m"
+        stop_ul = "\033[0m"
+        print(
+            f"Please specify {start_ul}e{stop_ul}ntry, {start_ul}r{stop_ul}etrieval, {start_ul}d{stop_ul}eletion, {start_ul}l{stop_ul}isting or e{start_ul}x{stop_ul}it:"
+        )
         response = input(">>> ")
         match response:
             case "e":
@@ -61,7 +65,7 @@ class PasswordManager:
     def check_credentials(self) -> bool:
         pass
 
-    def get_secret_ids(self) -> list[str] | None:
+    def get_secret_ids(self) -> list[str]:
         id_list = self.ssm_client.describe_parameters(
             ParameterFilters=[
                 {
@@ -81,5 +85,4 @@ class PasswordManager:
 
 
 if __name__ == "__main__":
-    pm = PasswordManager()
-    pm()
+    PasswordManager()()
