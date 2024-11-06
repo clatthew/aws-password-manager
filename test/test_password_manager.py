@@ -1,9 +1,17 @@
 from src.password_manager import *
 from pytest import mark
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 PATCH_PATH = "src.password_manager."
 
+class Testmain_loop:
+    @mark.it("Calls authentication function when first run")
+    def test_1(self):
+        with patch(f"{PATCH_PATH}menu", return_value=True):
+            with patch(f"{PATCH_PATH}authentication") as mock:
+                mock.return_value=True
+                main_loop()
+                mock.assert_called_once()
 
 class Testmenu:
     @mark.it("Entering input e, r, d, l or x calls the respective function:")
