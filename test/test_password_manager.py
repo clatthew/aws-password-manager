@@ -24,6 +24,7 @@ class Testmain_loop:
 
 
 class Testmenu:
+    # Add a test for exit exiting the loop?
     @mark.it("Menu function displays correct options message")
     def test_intro_message(self, capfd):
         with patch(f"{PATCH_PATH}input", return_value="x"):
