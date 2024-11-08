@@ -123,6 +123,24 @@ class Testauthentication:
     pass
 
 
+class Testget_input:
+    @mark.it("Displays supplied message in the terminal")
+    def test_1(self, capfd, test_pm):
+        test_message = "Diamond Sword to Major Steve"
+        with patch(f"{PATCH_PATH}input", return_value="z"):
+            test_pm.get_input(test_message)
+            captured = capfd.readouterr().out
+        assert captured == test_message + "\n"
+
+    @mark.it("Returns user's input")
+    def test_2(self, capfd, test_pm):
+        test_message = "Take your speed potion and put your diamond helmet on"
+        test_input = "Check your pickaxe, and may Notch love be with you"
+        with patch(f"{PATCH_PATH}input", return_value=test_input):
+            result = test_pm.get_input(test_message)
+        assert result == test_input
+
+
 class Testcheck_credentials:
     pass
 
@@ -138,20 +156,20 @@ class Testget_secret_ids:
         sm_dir = "/passwordmgr/"
         test_passwords = [
             {
-            'Name': f'{sm_dir}secret_password',
-            'SecretString': """{
+                "Name": f"{sm_dir}secret_password",
+                "SecretString": """{
                 "password": "biiiiig99",
                 "url": "www.big_secret.com"
             }""",
-            'ForceOverwriteReplicaSecret': True
+                "ForceOverwriteReplicaSecret": True,
             },
             {
-            'Name': f'{sm_dir}secreter_password',
-            'SecretString': """{
+                "Name": f"{sm_dir}secreter_password",
+                "SecretString": """{
                 "password": "biiiiigger99",
                 "url": "www.bigger_secret.com"
             }""",
-            'ForceOverwriteReplicaSecret': True
+                "ForceOverwriteReplicaSecret": True,
             },
         ]
         for password in test_passwords:

@@ -44,12 +44,12 @@ class PasswordManager:
         # Collect the secret info
         # use get_input
         secret = {
-            'Name': f'{PasswordManager.sm_dir}string',
-            'SecretString': """{
+            "Name": f"{PasswordManager.sm_dir}string",
+            "SecretString": """{
                 'secret_name': ___,
                 'secret_password': ___
             }""",
-            'ForceOverwriteReplicaSecret': True
+            "ForceOverwriteReplicaSecret": True,
         }
         self.sm_client.create_secret(**secret)
 
@@ -64,10 +64,8 @@ class PasswordManager:
     def deletion(self):
         # use get_input
         print("deletion")
-        secret_name = 'club_pengiun'
-        self.sm_client.delete_secret(
-            SecretId=secret_name
-        )
+        secret_name = "club_pengiun"
+        self.sm_client.delete_secret(SecretId=secret_name)
 
     def listing(self):
         # use get_input
@@ -84,8 +82,8 @@ class PasswordManager:
         password = input(">>> ")
         if password == "hello":
             return True
-        
-    def get_input(self, message):
+
+    def get_input(self, message: str) -> str:
         print(message)
         return input(">>> ")
 
@@ -94,14 +92,9 @@ class PasswordManager:
 
     def get_secret_ids(self) -> list[str]:
         secret_list = self.sm_client.list_secrets(
-            Filters=[
-                {
-                    'Key': 'name',
-                    'Values': [self.sm_dir]
-                }
-            ]
-        )['SecretList']
-        return [secret['Name'][len(self.sm_dir):] for secret in secret_list]
+            Filters=[{"Key": "name", "Values": [self.sm_dir]}]
+        )["SecretList"]
+        return [secret["Name"][len(self.sm_dir) :] for secret in secret_list]
 
     def __call__(self):
         self.main_loop()
