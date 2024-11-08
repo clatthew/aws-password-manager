@@ -1,4 +1,4 @@
-from src.password_manager import PasswordManager
+from src.password_manager import PasswordManager, get_input, get_secret_ids
 from pytest import mark, fixture, raises
 from unittest.mock import patch
 from boto3 import client
@@ -166,7 +166,7 @@ class Testget_secret_ids:
 
     @mock_aws
     @mark.it("Returns names of parameters added to SM")
-    def test_1(self, sm_client, test_pm):
+    def test_1(self, sm_client):
         sm_dir = "/passwordmgr/"
         test_passwords = [
             {
@@ -188,13 +188,28 @@ class Testget_secret_ids:
         ]
         for password in test_passwords:
             sm_client.create_secret(**password)
-        with patch.object(test_pm, "sm_client", sm_client):
-            result = test_pm.get_secret_ids()
+        result = get_secret_ids(sm_client)
         assert result == ["secret_password", "secreter_password"]
 
     @mock_aws
     @mark.it("Returns empty list if no parameters have been added to SM")
-    def test_2(self, sm_client, test_pm):
-        with patch.object(test_pm, "sm_client", sm_client):
-            result = test_pm.get_secret_ids()
+    def test_2(self, sm_client):
+        result = get_secret_ids(sm_client)
         assert result == []
+
+class Testget_input:
+    @mark.it("Displays supplied message in the terminal")
+    def test_1(self, capfd):
+        test_message = "Diamond Sword to Major Steve"
+        with patch(f"src.utils.input", return_value="z"):
+            get_input(test_message)
+            captured = capfd.readouterr().out
+        assert captured == test_message + "\n"
+
+    @mark.it("Returns user's input")
+    def test_2(self):
+        test_message = "Take your speed potion and put your diamond helmet on"
+        test_input = "Check your pickaxe, and may Notch love be with you"
+        with patch(f"src.utils.input", return_value=test_input):
+            result = get_input(test_message)
+        assert result == test_input

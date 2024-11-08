@@ -93,15 +93,20 @@ class PasswordManager:
         assert master_credentials_json['password'] == password
         
 
-    def get_secret_ids(self) -> list[str]:
-        secret_list = self.sm_client.list_secrets(
-            Filters=[{"Key": "name", "Values": [self.sm_dir]}]
-        )["SecretList"]
-        return [secret["Name"][len(self.sm_dir) :] for secret in secret_list]
+    
 
     def __call__(self):
         self.main_loop()
 
+def get_secret_ids(sm_client) -> list[str]:
+        secret_list = sm_client.list_secrets(
+            Filters=[{"Key": "name", "Values": [PasswordManager.sm_dir]}]
+        )["SecretList"]
+        return [secret["Name"][len(PasswordManager.sm_dir) :] for secret in secret_list]
+
+def get_input(message: str) -> str:
+    print(message)
+    return input(">>> ")
 
 if __name__ == "__main__":
     PasswordManager()()
