@@ -2,7 +2,7 @@ from boto3 import client
 from os import getenv
 from json import loads
 from getpass import getpass
-
+from src.env_setup import set_aws_creds
 
 class PasswordManager:
     sm_dir = "/passwordmgr/"
@@ -44,17 +44,7 @@ class PasswordManager:
 
     def entry(self):
         print("entry")
-        # Collect the secret info
-        # use get_input
-        secret = {
-            "Name": f"{PasswordManager.sm_dir}string",
-            "SecretString": """{
-                'secret_name': ___,
-                'secret_password': ___
-            }""",
-            "ForceOverwriteReplicaSecret": True,
-        }
-        self.sm_client.create_secret(**secret)
+        
 
     def retrieval(self):
         print("retrieval")
@@ -100,6 +90,7 @@ class PasswordManager:
         assert master_credentials_json["password"] == password
 
     def __call__(self):
+        set_aws_creds()
         self.main_loop()
 
 
