@@ -1,6 +1,5 @@
 from boto3 import client
 from os import getenv
-from src.utils import get_input
 from json import loads
 from re import compile
 class PasswordManager:
