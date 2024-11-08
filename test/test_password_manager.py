@@ -1,4 +1,9 @@
-from src.password_manager import PasswordManager, get_input, get_secret_ids
+from src.password_manager import (
+    PasswordManager,
+    get_input,
+    get_secret_ids,
+    underline_letter,
+)
 from pytest import mark, fixture, raises
 from unittest.mock import patch
 from boto3 import client
@@ -107,7 +112,9 @@ class Testmenu:
 
 
 class Testentry:
-    pass
+    def test_1(self, test_pm):
+        with patch(f"{PATCH_PATH}input", return_value='Club Penguin'):
+            test_pm.entry()
 
 
 class Testretrieval:
@@ -244,3 +251,8 @@ class Testget_input:
         with patch(f"{PATCH_PATH}input", return_value=test_input):
             result = get_input(test_message)
         assert result == test_input
+
+
+# class Testunderline:
+#     def test1(self):
+#         print(underline_letter('matthew', 'a'))

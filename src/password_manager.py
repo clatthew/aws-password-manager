@@ -4,6 +4,7 @@ from json import loads
 from getpass import getpass
 from src.env_setup import set_aws_creds
 
+
 class PasswordManager:
     sm_dir = "/passwordmgr/"
     master_credentials = "master_credentials"
@@ -43,8 +44,26 @@ class PasswordManager:
                 print("Invalid input. ", end="")
 
     def entry(self):
-        print("entry")
-        
+        print(underline("New password:"))
+        name = input("New password name:")
+        fields = {
+            "password_name": {
+                "display_name": underline_letter("password name", "n"),
+                "content": name,
+            },
+            "user_name": {
+                "display_name": underline_letter("username", "u"),
+                "content": "[empty]",
+            },
+            "password": {
+                "display_name": underline_letter("password name", "p"),
+                "content": "[empty]",
+            },
+            "url": {"display_name": underline_letter("url", "u"), "content": "[empty]"},
+        }
+        print("Select field to edit:")
+        for field in fields:
+            print(f"{fields[field]['display_name']}: {fields[field]['content']}")
 
     def retrieval(self):
         print("retrieval")
@@ -105,6 +124,15 @@ def get_input(message: str) -> str:
     print(message)
     return input(">>> ")
 
+
+def underline_letter(word: str, letter_to_underline: str) -> str:
+    ul = {"start": "\033[4m", "stop": "\033[0m"}
+    pos = word.index(letter_to_underline)
+    return word[:pos] + underline(word[pos]) + word[pos + 1 :]
+
+def underline(word):
+    ul = {"start": "\033[4m", "stop": "\033[0m"}
+    return ul['start'] + word + ul['stop']
 
 if __name__ == "__main__":
     PasswordManager()()
