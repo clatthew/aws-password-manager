@@ -1,6 +1,6 @@
 from boto3 import client
 from os import getenv
-
+from src.utils import get_input
 
 class PasswordManager:
     sm_dir = "/passwordmgr/"
@@ -82,10 +82,6 @@ class PasswordManager:
         password = input(">>> ")
         if password == "hello":
             return True
-
-    def get_input(self, message: str) -> str:
-        print(message)
-        return input(">>> ")
 
     def check_credentials(self) -> bool:
         pass
