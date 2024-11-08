@@ -1,6 +1,6 @@
 from boto3 import client
 from os import environ
-from password_manager import PasswordManager
+from password_manager import PasswordManager, get_secret_ids
 from botocore.exceptions import ClientError
 from getpass import getpass
 from src.env_setup import set_aws_creds
@@ -11,8 +11,10 @@ def setup_credentials():
     try:
         set_aws_creds()
         sm_client = client("secretsmanager", environ["AWS_DEFAULT_REGION"])
+        if PasswordManager.master_credentials not in get_secret_ids(sm_client):
+            sm_client.create_secret(Name=f"{PasswordManager.sm_dir}{PasswordManager.master_credentials}")
         password = {
-            "Name": f"{PasswordManager.sm_dir}{PasswordManager.master_credentials}",
+            "SecretId": f"{PasswordManager.sm_dir}{PasswordManager.master_credentials}",
             "SecretString":
                 f"""{{
                     "username": "{username}",
@@ -20,7 +22,7 @@ def setup_credentials():
                     }}
                 """
         }
-        sm_client.create_secret(**password)
+        sm_client.update_secret(**password)
         print("Master credentials successfully updated.")
     except ClientError:
         print("Connection to AWS SecretsManager failed. Please check your AWS credentials and try again.")
