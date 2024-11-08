@@ -1,10 +1,11 @@
 from boto3 import client
 from os import getenv
 from src.utils import get_input
-
+from json import loads
+from re import compile
 class PasswordManager:
     sm_dir = "/passwordmgr/"
-
+    master_credentials = "master_credentials"
     def __init__(self):
         self.sm_client = client("secretsmanager", getenv("AWS_DEFAULT_REGION"))
         self.running = False
@@ -83,8 +84,14 @@ class PasswordManager:
         if password == "hello":
             return True
 
-    def check_credentials(self) -> bool:
-        pass
+    def check_credentials(self, username, password):
+        master_credentials = self.sm_client.get_secret_value(
+            SecretId=f"{PasswordManager.sm_dir}{PasswordManager.master_credentials}"
+        )['SecretString']
+        master_credentials_json = loads(master_credentials)
+        assert master_credentials_json['username'] == username
+        assert master_credentials_json['password'] == password
+        
 
     def get_secret_ids(self) -> list[str]:
         secret_list = self.sm_client.list_secrets(

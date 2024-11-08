@@ -1,5 +1,5 @@
 from src.password_manager import PasswordManager
-from pytest import mark, fixture
+from pytest import mark, fixture, raises
 from unittest.mock import patch
 from boto3 import client
 from moto import mock_aws
@@ -20,6 +20,11 @@ def aws_creds():
 @fixture
 def test_pm():
     return PasswordManager()
+
+
+@fixture
+def sm_client():
+    return client("secretsmanager", environ["AWS_DEFAULT_REGION"])
 
 
 class Testmain_loop:
@@ -124,13 +129,40 @@ class Testauthentication:
 
 
 class Testcheck_credentials:
-    pass
+    @fixture
+    def master_credentials(self):
+        return {
+            "Name": f"{PasswordManager.sm_dir}{PasswordManager.master_credentials}",
+            "SecretString":
+                f"""{{
+                    "username": "mattyc",
+                    "password": "passyc"
+                    }}
+                """
+        }
+    @mock_aws
+    @mark.it("Returns nothing when correct credentials are supplied")
+    def test_1(self, test_pm, sm_client, master_credentials):
+        sm_client.create_secret(**master_credentials)
+        with patch.object(test_pm, "sm_client", sm_client):
+            assert not test_pm.check_credentials('mattyc','passyc')
+    @mock_aws
+    @mark.it("Raises AssertionError when supplied username is incorrect")
+    def test_2(self, test_pm, sm_client, master_credentials):
+        sm_client.create_secret(**master_credentials)
+        with patch.object(test_pm, "sm_client", sm_client):
+            with raises(AssertionError):
+                test_pm.check_credentials('mattycc', 'passyc')
+    @mock_aws
+    @mark.it("Raises AssertionError when supplied password is incorrect")
+    def test_3(self, test_pm, sm_client, master_credentials):
+        sm_client.create_secret(**master_credentials)
+        with patch.object(test_pm, "sm_client", sm_client):
+            with raises(AssertionError):
+                test_pm.check_credentials('mattyc', 'passycccc')
 
 
 class Testget_secret_ids:
-    @fixture
-    def sm_client(self):
-        return client("secretsmanager", environ["AWS_DEFAULT_REGION"])
 
     @mock_aws
     @mark.it("Returns names of parameters added to SM")
