@@ -32,7 +32,7 @@ def get_password_input():
     password2 = getpass('Confirm new password: ')
     if password == password2:
         return password
-    print("Your passwords did not match. Please try again")
+    print("Your passwords did not match. Please try again.")
     return get_password_input()
 
 if __name__ == "__main__":
