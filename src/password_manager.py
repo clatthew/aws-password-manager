@@ -51,7 +51,7 @@ class PasswordManager:
             }""",
             'ForceOverwriteReplicaSecret': True
         }
-        self.sm_client.create_secret(secret)
+        self.sm_client.create_secret(**secret)
 
     def retrieval(self):
         print("retrieval")
@@ -94,18 +94,14 @@ class PasswordManager:
 
     def get_secret_ids(self) -> list[str]:
         secret_list = self.sm_client.list_secrets(
-            ParameterFilters=[
+            Filters=[
                 {
-                    "Key": "name",
-                    "Values": [PasswordManager.sm_dir],
+                    'Key': 'name',
+                    'Values': [self.sm_dir]
                 }
             ]
         )['SecretList']
-        return secret_list
-        # return [
-        #     parameter["Name"][len(PasswordManager.sm_dir) :]
-        #     for parameter in id_list["Parameters"]
-        # ]
+        return [secret['Name'][len(self.sm_dir):] for secret in secret_list]
 
     def __call__(self):
         self.main_loop()

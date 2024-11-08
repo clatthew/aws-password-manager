@@ -129,45 +129,40 @@ class Testcheck_credentials:
 
 class Testget_secret_ids:
     @fixture
-    def ssm_client(self):
-        return client("ssm", environ["AWS_DEFAULT_REGION"])
+    def sm_client(self):
+        return client("secretsmanager", environ["AWS_DEFAULT_REGION"])
 
     @mock_aws
-    @mark.it("Returns names of parameters added to SSM")
-    def test_1(self, ssm_client, test_pm):
-        ssm_dir = "/passwordmgr/"
+    @mark.it("Returns names of parameters added to SM")
+    def test_1(self, sm_client, test_pm):
+        sm_dir = "/passwordmgr/"
         test_passwords = [
             {
-                "Name": f"{ssm_dir}secret_password",
-                "Value": "matthew",
-                "Type": "String",
-                "Overwrite": True,
+            'Name': f'{sm_dir}secret_password',
+            'SecretString': """{
+                "password": "biiiiig99",
+                "url": "www.big_secret.com"
+            }""",
+            'ForceOverwriteReplicaSecret': True
             },
             {
-                "Name": f"{ssm_dir}secreter_password",
-                "Value": "matthewer",
-                "Type": "String",
-                "Overwrite": True,
+            'Name': f'{sm_dir}secreter_password',
+            'SecretString': """{
+                "password": "biiiiigger99",
+                "url": "www.bigger_secret.com"
+            }""",
+            'ForceOverwriteReplicaSecret': True
             },
         ]
         for password in test_passwords:
-            ssm_client.put_parameter(**password)
-        with patch.object(test_pm, "ssm_client", ssm_client):
+            sm_client.create_secret(**password)
+        with patch.object(test_pm, "sm_client", sm_client):
             result = test_pm.get_secret_ids()
         assert result == ["secret_password", "secreter_password"]
 
     @mock_aws
-    @mark.it("Returns empty list if no parameters have been added to SSM")
-    def test_2(self, ssm_client, test_pm):
-        with patch.object(test_pm, "ssm_client", ssm_client):
+    @mark.it("Returns empty list if no parameters have been added to SM")
+    def test_2(self, sm_client, test_pm):
+        with patch.object(test_pm, "sm_client", sm_client):
             result = test_pm.get_secret_ids()
         assert result == []
-
-
-class Testssm_client:
-    @mark.xfail
-    @mock_aws
-    @mark.it("Returns instance of boto3 client")
-    def test_1(self):
-        print(type(test_pm.ssm_client))
-        assert isinstance(test_pm.ssm_client(), SSMClient)
