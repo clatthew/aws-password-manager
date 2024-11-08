@@ -27,6 +27,18 @@ def sm_client():
     return client("secretsmanager", environ["AWS_DEFAULT_REGION"])
 
 
+@fixture
+def master_credentials():
+    return {
+        "Name": f"{PasswordManager.sm_dir}{PasswordManager.master_credentials}",
+        "SecretString": f"""{{
+                "username": "mattyc",
+                "password": "passyc"
+                }}
+            """,
+    }
+
+
 class Testmain_loop:
     @mark.it("Calls authentication function when first run")
     def test_1(self, test_pm):
@@ -125,45 +137,63 @@ class Testexit:
 
 
 class Testauthentication:
-    pass
+    @mock_aws
+    @mark.it("Returns True when correct credentials are entered")
+    def test_1(self, test_pm, sm_client, master_credentials):
+        sm_client.create_secret(**master_credentials)
+        with patch.object(test_pm, "sm_client", sm_client):
+            with patch(f"{PATCH_PATH}input", return_value="mattyc"):
+                with patch(f"{PATCH_PATH}getpass", return_value="passyc"):
+                    result = test_pm.authentication()
+        assert result
+
+    @mock_aws
+    @mark.it("Returns False when incorrect username is entered")
+    def test_2(self, test_pm, sm_client, master_credentials):
+        sm_client.create_secret(**master_credentials)
+        with patch.object(test_pm, "sm_client", sm_client):
+            with patch(f"{PATCH_PATH}input", return_value="mattyc2"):
+                with patch(f"{PATCH_PATH}getpass", return_value="passyc"):
+                    result = test_pm.authentication()
+        assert not result
+
+    @mock_aws
+    @mark.it("Returns False when incorrect password is entered")
+    def test_3(self, test_pm, sm_client, master_credentials):
+        sm_client.create_secret(**master_credentials)
+        with patch.object(test_pm, "sm_client", sm_client):
+            with patch(f"{PATCH_PATH}input", return_value="mattyc"):
+                with patch(f"{PATCH_PATH}getpass", return_value="passyc2"):
+                    result = test_pm.authentication()
+        assert not result
 
 
 class Testcheck_credentials:
-    @fixture
-    def master_credentials(self):
-        return {
-            "Name": f"{PasswordManager.sm_dir}{PasswordManager.master_credentials}",
-            "SecretString":
-                f"""{{
-                    "username": "mattyc",
-                    "password": "passyc"
-                    }}
-                """
-        }
     @mock_aws
     @mark.it("Returns nothing when correct credentials are supplied")
     def test_1(self, test_pm, sm_client, master_credentials):
         sm_client.create_secret(**master_credentials)
         with patch.object(test_pm, "sm_client", sm_client):
-            assert not test_pm.check_credentials('mattyc','passyc')
+            assert not test_pm.check_credentials("mattyc", "passyc")
+
     @mock_aws
     @mark.it("Raises AssertionError when supplied username is incorrect")
     def test_2(self, test_pm, sm_client, master_credentials):
         sm_client.create_secret(**master_credentials)
         with patch.object(test_pm, "sm_client", sm_client):
             with raises(AssertionError):
-                test_pm.check_credentials('mattycc', 'passyc')
+                test_pm.check_credentials("mattycc", "passyc")
+
     @mock_aws
     @mark.it("Raises AssertionError when supplied password is incorrect")
     def test_3(self, test_pm, sm_client, master_credentials):
         sm_client.create_secret(**master_credentials)
         with patch.object(test_pm, "sm_client", sm_client):
             with raises(AssertionError):
-                test_pm.check_credentials('mattyc', 'passycccc')
+                test_pm.check_credentials("mattyc", "passycccc")
 
 
 class Testget_secret_ids:
-
     @mock_aws
     @mark.it("Returns names of parameters added to SM")
     def test_1(self, sm_client):
@@ -196,6 +226,7 @@ class Testget_secret_ids:
     def test_2(self, sm_client):
         result = get_secret_ids(sm_client)
         assert result == []
+
 
 class Testget_input:
     @mark.it("Displays supplied message in the terminal")

@@ -1,10 +1,13 @@
 from boto3 import client
 from os import getenv
 from json import loads
-from re import compile
+from getpass import getpass
+
+
 class PasswordManager:
     sm_dir = "/passwordmgr/"
     master_credentials = "master_credentials"
+
     def __init__(self):
         self.sm_client = client("secretsmanager", getenv("AWS_DEFAULT_REGION"))
         self.running = False
@@ -77,35 +80,40 @@ class PasswordManager:
         self.running = False
 
     def authentication(self) -> bool:
-        # use get_input
-        print("enter password:")
-        password = input(">>> ")
-        if password == "hello":
+        print("Please enter your username and password.")
+        username = input("Username: ")
+        password = getpass("Password: ")
+        try:
+            self.check_credentials(username, password)
+            print("Authentication successful.")
             return True
+        except AssertionError:
+            print("Authentication failed.")
+            return False
 
     def check_credentials(self, username, password):
         master_credentials = self.sm_client.get_secret_value(
             SecretId=f"{PasswordManager.sm_dir}{PasswordManager.master_credentials}"
-        )['SecretString']
+        )["SecretString"]
         master_credentials_json = loads(master_credentials)
-        assert master_credentials_json['username'] == username
-        assert master_credentials_json['password'] == password
-        
-
-    
+        assert master_credentials_json["username"] == username
+        assert master_credentials_json["password"] == password
 
     def __call__(self):
         self.main_loop()
 
+
 def get_secret_ids(sm_client) -> list[str]:
-        secret_list = sm_client.list_secrets(
-            Filters=[{"Key": "name", "Values": [PasswordManager.sm_dir]}]
-        )["SecretList"]
-        return [secret["Name"][len(PasswordManager.sm_dir) :] for secret in secret_list]
+    secret_list = sm_client.list_secrets(
+        Filters=[{"Key": "name", "Values": [PasswordManager.sm_dir]}]
+    )["SecretList"]
+    return [secret["Name"][len(PasswordManager.sm_dir) :] for secret in secret_list]
+
 
 def get_input(message: str) -> str:
     print(message)
     return input(">>> ")
+
 
 if __name__ == "__main__":
     PasswordManager()()
