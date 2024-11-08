@@ -112,8 +112,9 @@ class Testmenu:
 
 
 class Testentry:
+    @mark.it("Returns the ")
     def test_1(self, test_pm):
-        with patch(f"{PATCH_PATH}input", return_value='Club Penguin'):
+        with patch(f"{PATCH_PATH}input", return_value="Club Penguin"):
             test_pm.entry()
 
 
