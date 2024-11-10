@@ -9,7 +9,7 @@ In terminal, run
 - `pip install -r requirements.txt`
 - `pytest --testdox`
 
-then run password_manager.py in the virtual environment.
+then run password_manager.py using the version of python in your virtual environment.
 
 ## Funtionallity
 ### Authentication
@@ -36,3 +36,4 @@ Enter the name of a credential to delete it from PasswordManager.
 - Authentication
     - Implement authentication timeout
     - Exit program if incorrect credentials entered too many times
+- Write retrieved credentials to a text file instead of echoing in the terminal
