@@ -13,7 +13,7 @@ then run password_manager.py using the version of python in your virtual environ
 
 ## Funtionallity
 ### Authentication
-Upon startup, PasswordManager will ask for your master credentials. Enter your username and password to enter the program.
+Upon startup, PasswordManager will ask for your master credentials. Enter your username and password to enter the program. The default username is `test` and the default password is `test`. You can change these on lines 8 and 9 of password_manager.py.
 ### Main menu
 Choose between credential <u>e</u>ntry, <u>r</u>etrieval, <u>l</u>isting, <u>d</u>eletion and e<u>x</u>itting the program by entering the option's underlined letter and pressing enter.
 ### Entry

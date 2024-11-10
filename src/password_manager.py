@@ -4,6 +4,10 @@ from json import loads, dumps
 from getpass import getpass
 from moto import mock_aws
 
+MASTER_CREDENTIALS = {
+    'username': 'test',
+    'password': 'test'
+}
 
 class PasswordManager:
     sm_dir = "/passwordmgr/"
@@ -238,8 +242,8 @@ if __name__ == "__main__":
             **{
                 "Name": f"{PasswordManager.sm_dir}{PasswordManager.master_credentials}",
                 "SecretString": f"""{{
-                "username": "test",
-                "password": "test"
+                "username": "{MASTER_CREDENTIALS['username']}",
+                "password": "{MASTER_CREDENTIALS['password']}"
                 }}
             """,
             }
