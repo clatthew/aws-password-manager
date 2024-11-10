@@ -10,6 +10,7 @@ from unittest.mock import patch
 from boto3 import client
 from moto import mock_aws
 from os import environ
+from datetime import datetime
 
 PATCH_PATH = "src.password_manager."
 
@@ -112,7 +113,6 @@ class Testmenu:
 
 
 class Testentry:
-    # add test for excluding username, password or url
     @mock_aws
     @mark.it("Allows entry of a new credential with all fields")
     def test_1(self, test_pm):
@@ -165,7 +165,7 @@ class Testentry:
     @mark.it(
         "Allows overwriting of credential if a new credential has the same name as an existing credential"
     )
-    def test_3(self, test_pm, capfd):
+    def test_3(self, test_pm):
         test_credential_name = "mattyc"
         test_password = "hello66"
         with patch(f"{PATCH_PATH}input", side_effect=[test_credential_name, "s"]):
@@ -177,7 +177,8 @@ class Testentry:
             test_pm.entry()
         with patch(f"{PATCH_PATH}input", side_effect=[test_credential_name]):
             test_pm.retrieval()
-            result = capfd.readouterr().out
+        with open (f"credentials/{test_credential_name}.txt", 'r') as f:
+            result = f.read()
         assert f"Password: {test_password}" in result
 
     @mock_aws
@@ -205,8 +206,8 @@ class Testentry:
 
 class Testretrieval:
     @mock_aws
-    @mark.it("Full credential info echoed to terminal")
-    def test_1(self, test_pm, capfd):
+    @mark.it("Full credential info written to file.")
+    def test_1(self, test_pm):
         test_credential = {
             "name": "Club Pengiun",
             "username": "icybird87",
@@ -228,12 +229,19 @@ class Testretrieval:
         ):
             test_pm.entry()
         with patch(f"{PATCH_PATH}input", side_effect=[test_credential["name"]]):
-            test_pm.retrieval()
-            result = capfd.readouterr().out
-        assert (
-            f"Credential {underline(test_credential['name'])}:\nUsername: {test_credential['username']}\nPassword: {test_credential['password']}\nURL: {test_credential['url']}"
-            in result
+            with patch(f"{PATCH_PATH}datetime") as mock:
+                mock.now.return_value = datetime(2024, 1, 1, 0, 0, 0)
+                test_pm.retrieval()
+        expected = (
+            f"Credential {test_credential['name']}:\n"
+            + f"Username: {test_credential['username']}\n"
+            + f"Password: {test_credential['password']}\n"
+            + f"URL: {test_credential['url']}\n"
+            + f"Credential retrieved on 2024-01-01 at 00:00:00.\n"
         )
+        with open(f"credentials/{test_credential['name']}.txt", "r") as f:
+            result = f.read()
+        assert result == expected
 
     @mock_aws
     @mark.it('Echoes "No credential found..." if credential name does not exist')

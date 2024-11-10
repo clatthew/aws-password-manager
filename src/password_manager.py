@@ -3,11 +3,12 @@ from botocore.exceptions import ClientError
 from json import loads, dumps
 from getpass import getpass
 from moto import mock_aws
+from datetime import datetime
+from os import mkdir
+from shutil import rmtree
 
-MASTER_CREDENTIALS = {
-    'username': 'test',
-    'password': 'test'
-}
+MASTER_CREDENTIALS = {"username": "test", "password": "test"}
+
 
 class PasswordManager:
     sm_dir = "/passwordmgr/"
@@ -16,6 +17,11 @@ class PasswordManager:
     def __init__(self):
         self.sm_client = client("secretsmanager", "eu-west-2")
         self.running = False
+        try:
+            rmtree("credentials")
+        except FileNotFoundError:
+            pass
+        mkdir("credentials")
 
     def main_loop(self):
         self.running = True
@@ -148,11 +154,17 @@ class PasswordManager:
         password = self.retrive_secret(credential_name)
         if password:
             password_dict = loads(password["SecretString"])
-            print(f"Credential {underline(credential_name)}:")
-            if not password_dict:
-                print("No fields to display.")
-            for entry in password_dict:
-                print(f"{entry}: {password_dict[entry]}")
+            with open(f"credentials/{credential_name}.txt", "w", encoding="utf-8") as f:
+                f.write(f"Credential {credential_name}:\n")
+                if not password_dict:
+                    f.write("No fields to display\n")
+                for entry in password_dict:
+                    f.write(f"{entry}: {password_dict[entry]}\n")
+                now = datetime.now()
+                f.write(
+                    f"Credential retrieved on {now.strftime('%Y-%m-%d')} at {now.strftime('%H:%M:%S')}.\n"
+                )
+
         else:
             print(f'No credential found with name "{credential_name}"')
 
@@ -185,6 +197,7 @@ class PasswordManager:
     def exit(self):
         print("Thank you. Goodbye.")
         self.running = False
+        rmtree("credentials")
 
     def authentication(self) -> bool:
         print("Please enter your username and password.")
