@@ -1,11 +1,12 @@
 from src.password_manager import (
     PasswordManager,
-    get_input,
     get_secret_ids,
+    underline,
     underline_letter,
 )
+from json import loads
 from pytest import mark, fixture, raises
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 from boto3 import client
 from moto import mock_aws
 from os import environ
@@ -68,7 +69,6 @@ class Testmenu:
     def menu_message(self):
         return "Please specify \x1b[4me\x1b[0mntry, \x1b[4mr\x1b[0metrieval, \x1b[4md\x1b[0meletion, \x1b[4ml\x1b[0misting or e\x1b[4mx\x1b[0mit:"
 
-    # Add a test for exit exiting the loop?
     @mark.it("Menu function displays correct options message")
     def test_intro_message(self, capfd, test_pm, menu_message):
         with patch(f"{PATCH_PATH}input", return_value="x"):
@@ -112,22 +112,188 @@ class Testmenu:
 
 
 class Testentry:
-    @mark.it("Returns the ")
+    # add test for excluding username, password or url
+    @mock_aws
+    @mark.it("Allows entry of a new credential with all fields")
     def test_1(self, test_pm):
-        with patch(f"{PATCH_PATH}input", return_value="Club Penguin"):
+        test_secret = {
+            "Secret Name": "Club Penguin",
+            "Username": "icybird87",
+            "Password": "nootnoot",
+            "URL": "clubpenguin.com",
+        }
+
+        with patch(
+            f"{PATCH_PATH}input",
+            side_effect=[
+                test_secret["Secret Name"],
+                "u",
+                test_secret["Username"],
+                "p",
+                test_secret["Password"],
+                "r",
+                test_secret["URL"],
+                "s",
+                "x",
+            ],
+        ):
             test_pm.entry()
+        result = loads(
+            test_pm.sm_client.get_secret_value(
+                SecretId=f"{PasswordManager.sm_dir}{test_secret['Secret Name']}"
+            )["SecretString"]
+        )
+        del test_secret["Secret Name"]
+        assert result == test_secret
+
+    @mark.it(
+        "Doesn't allow new credential to have the same name as the master credentials"
+    )
+    def test_2(self, test_pm, capfd):
+        with patch(
+            f"{PATCH_PATH}input",
+            side_effect=[PasswordManager.master_credentials, "s", "x"],
+        ):
+            test_pm.entry()
+            result = capfd.readouterr().out
+            assert (
+                f'Credential name "{PasswordManager.master_credentials}" is not allowed. Please choose a different name.'
+                in result
+            )
+
+    @mock_aws
+    @mark.it(
+        "Allows overwriting of credential if a new credential has the same name as an existing credential"
+    )
+    def test_3(self, test_pm, capfd):
+        test_credential_name = "mattyc"
+        test_password = "hello66"
+        with patch(f"{PATCH_PATH}input", side_effect=[test_credential_name, "s"]):
+            test_pm.entry()
+        with patch(
+            f"{PATCH_PATH}input",
+            side_effect=[test_credential_name, "p", test_password, "s", "o"],
+        ):
+            test_pm.entry()
+        with patch(f"{PATCH_PATH}input", side_effect=[test_credential_name]):
+            test_pm.retrieval()
+            result = capfd.readouterr().out
+        assert f"Password: {test_password}" in result
+
+    @mock_aws
+    @mark.it("Does not save a credential if the user exits without saving")
+    def test_4(self, test_pm):
+        test_credential_name = "mattyc"
+        with patch(f"{PATCH_PATH}input", side_effect=[test_credential_name, "x"]):
+            test_pm.entry()
+        assert not get_secret_ids(test_pm.sm_client)
+
+    @mock_aws
+    @mark.it(
+        "If username, password or url are not entered, the fields aren't stored in the credential"
+    )
+    def test_5(self, test_pm, capfd):
+        test_credential_name = "Club Penguin"
+        with patch(f"{PATCH_PATH}input", side_effect=[test_credential_name, "s"]):
+            test_pm.entry()
+        with patch(f"{PATCH_PATH}input", side_effect=[test_credential_name]):
+            test_pm.retrieval()
+            result = capfd.readouterr().out
+        for field in ["Username", "Password", "URL"]:
+            assert field not in result
 
 
 class Testretrieval:
-    pass
-
+    @mock_aws
+    @mark.it("Full credential info echoed to terminal")
+    def test_1(self, test_pm, capfd):
+        test_credential = {
+            "name": "Club Pengiun",
+            "username": "icybird87",
+            "password": "nootnoot",
+            "url": "clubpenguin.com"
+        }
+        with patch(f"{PATCH_PATH}input", side_effect=[test_credential['name'],"u", test_credential['username'], 'p', test_credential['password'], 'r', test_credential['url'], "s"]):
+            test_pm.entry()
+        with patch(f"{PATCH_PATH}input", side_effect=[test_credential['name']]):
+            test_pm.retrieval()
+            result = capfd.readouterr().out
+        assert f"Credential {underline(test_credential['name'])}:\nUsername: {test_credential['username']}\nPassword: {test_credential['password']}\nURL: {test_credential['url']}" in result
+    @mock_aws
+    @mark.it("Echoes \"No credential found...\" if credential name does not exist")
+    def test_2(self, test_pm, capfd):
+        test_credential_name = 'Club Penguin'
+        with patch(f"{PATCH_PATH}input", side_effect=[test_credential_name]):
+            test_pm.retrieval()
+            result = capfd.readouterr().out
+        assert f"No credential found with name \"{test_credential_name}\"" in result
 
 class Testdeletion:
-    pass
+    @mock_aws
+    @mark.it("Deletes an existing credential")
+    def test_1(self, test_pm):
+        secret = {
+            "Name": f"{PasswordManager.sm_dir}Club Penguin",
+            "SecretString": f"""{{
+                "username": "icybird87",
+                "password": "nootnoot"
+                }}
+            """,
+        }
+        test_pm.sm_client.create_secret(**secret)
+        assert get_secret_ids(test_pm.sm_client)
+        with patch(f"{PATCH_PATH}input", return_value="Club Penguin"):
+            test_pm.deletion()
+        assert not get_secret_ids(test_pm.sm_client)
+
+    @mark.it("sm_client not called when credential doesn't exist")
+    def test_2(self, test_pm):
+        with patch(f"{PATCH_PATH}input", return_value="Club Penguin"):
+            with patch.object(test_pm, "sm_client") as mock:
+                test_pm.deletion()
+                assert mock.call_count == 0
 
 
 class Testlisting:
-    pass
+    @mock_aws
+    @mark.it('Echoes "No credentials saved." when no credentials are saved')
+    def test_1(self, test_pm, capfd):
+        expected = "No credentials saved."
+        test_pm.listing()
+        result = capfd.readouterr().out
+        assert result == expected + "\n"
+
+    @mock_aws
+    @mark.it(
+        "Echoes names of all available credentials when credentials have been saved"
+    )
+    def test_2(self, test_pm, capfd):
+        expected = "Stored credentials:\n- Club Penguin\n- Runescape\n"
+        secrets = [
+            {
+                "Name": f"{PasswordManager.sm_dir}Club Penguin",
+                "SecretString": """
+                {
+                "Username": "icybird87",
+                "Password": "nootnoot",
+                "URL": "clubpenguin.com",
+                }
+            """,
+            },
+            {
+                "Name": f"{PasswordManager.sm_dir}Runescape",
+                "SecretString": """{
+            "Username": "bigwizzy",
+            "Password": "magic",
+            "URL": "runescape.com",
+            }""",
+            },
+        ]
+        for secret in secrets:
+            test_pm.sm_client.create_secret(**secret)
+        test_pm.listing()
+        result = capfd.readouterr().out
+        assert result == expected
 
 
 class Testexit:
@@ -236,24 +402,27 @@ class Testget_secret_ids:
         assert result == []
 
 
-class Testget_input:
-    @mark.it("Displays supplied message in the terminal")
-    def test_1(self, capfd):
-        test_message = "Diamond Sword to Major Steve"
-        with patch(f"{PATCH_PATH}input", return_value="z"):
-            get_input(test_message)
-            captured = capfd.readouterr().out
-        assert captured == test_message + "\n"
+class Testunderline:
+    @mark.it("Pre- and appends underline formatting codes to string")
+    def test1(self):
+        test_string = "hello"
+        expected = f"\x1b[4m{test_string}\x1b[0m"
+        result = underline(test_string)
+        assert result == expected
 
-    @mark.it("Returns user's input")
+
+class Testunderline_letter:
+    @mark.it("Underlines first occurrrence of a letter in the word")
+    def test_1(self):
+        test_string = "hello"
+        expected = f"{test_string[:2]}\x1b[4ml\x1b[0m{test_string[3:]}"
+        result = underline_letter(test_string, "l")
+        assert result == expected
+
+    @mark.it(
+        "Returns the original string if the letter to underline is not present in the string"
+    )
     def test_2(self):
-        test_message = "Take your speed potion and put your diamond helmet on"
-        test_input = "Check your pickaxe, and may Notch love be with you"
-        with patch(f"{PATCH_PATH}input", return_value=test_input):
-            result = get_input(test_message)
-        assert result == test_input
-
-
-# class Testunderline:
-#     def test1(self):
-#         print(underline_letter('matthew', 'a'))
+        test_string = "hello"
+        result = underline_letter(test_string, "j")
+        assert result == test_string

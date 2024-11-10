@@ -47,13 +47,12 @@ class PasswordManager:
                 print("Invalid input. ", end="")
 
     def entry(self) -> dict:
-        print(underline("New password:"))
-        name = input("New password name: ")
+        name = input("New credential name: ")
         fields = {
-            "password_name": {
-                "display_name": "Password name",
+            "credential_name": {
+                "display_name": "Credential Name",
                 "content": name,
-                "id_letter": "n",
+                "id_letter": "C",
             },
             "user_name": {
                 "display_name": "Username",
@@ -80,8 +79,8 @@ class PasswordManager:
             response = input(">>> ")
             field = None
             match response.lower():
-                case "n":
-                    field = fields["password_name"]
+                case "c":
+                    field = fields["credential_name"]
                 case "u":
                     field = fields["user_name"]
                 case "p":
@@ -89,16 +88,29 @@ class PasswordManager:
                 case "r":
                     field = fields["url"]
                 case "s":
-                    if (
-                        fields["password_name"]["content"]
-                        != PasswordManager.master_credentials
-                    ):
+                    credential_name = fields["credential_name"]["content"]
+                    if credential_name == PasswordManager.master_credentials:
+                        print(
+                            f'Credential name "{PasswordManager.master_credentials}" is not allowed. Please choose a different name.'
+                        )
+                    elif credential_name in get_secret_ids(self.sm_client):
+                        print(
+                            f'Credential name "{credential_name}" already in use. Would you like to {underline_letter("overwrite", "o")} or {underline_letter("choose", "c")} a different name?'
+                        )
+                        responded = False
+                        while not responded:
+                            response = input(">>> ")
+                            match response:
+                                case "o":
+                                    responded = True
+                                    editing = False
+                                    self.delete_secret(credential_name)
+                                    self.save_secret(fields)
+                                case "c":
+                                    responded = True
+                    else:
                         editing = False
                         self.save_secret(fields)
-                    else:
-                        print(
-                            f'Password name may not be "{PasswordManager.master_credentials}"'
-                        )
                 case "x":
                     editing = False
             if field:
@@ -109,17 +121,17 @@ class PasswordManager:
             {
                 fields[field]["display_name"]: fields[field]["content"]
                 for field in fields
-                if fields[field]["content"] != "[empty]" and field != "password_name"
+                if fields[field]["content"] != "[empty]" and field != "credential_name"
             }
         )
         secret = {
-            "Name": f"{PasswordManager.sm_dir}{fields['password_name']['content']}",
+            "Name": f"{PasswordManager.sm_dir}{fields['credential_name']['content']}",
             "SecretString": secret_string,
             "ForceOverwriteReplicaSecret": True,
         }
         self.sm_client.create_secret(**secret)
         print(
-            f"Credential {fields['password_name']['content']} saved to SecretsManager."
+            f"Credential {fields['credential_name']['content']} saved to SecretsManager."
         )
 
     def retrive_secret(self, credential_name: str) -> dict | None:
@@ -135,6 +147,9 @@ class PasswordManager:
         password = self.retrive_secret(credential_name)
         if password:
             password_dict = loads(password["SecretString"])
+            print(f"Credential {underline(credential_name)}:")
+            if not password_dict:
+                print("No fields to display.")
             for entry in password_dict:
                 print(f"{entry}: {password_dict[entry]}")
         else:
@@ -205,11 +220,6 @@ def get_secret_ids(sm_client) -> list[str]:
         if secret["Name"]
         != f"{PasswordManager.sm_dir}{PasswordManager.master_credentials}"
     ]
-
-
-def get_input(message: str) -> str:
-    print(message)
-    return input(">>> ")
 
 
 def underline_letter(word: str, letter_to_underline: str) -> str:
