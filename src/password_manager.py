@@ -103,6 +103,8 @@ class PasswordManager:
                                     self.save_secret(fields)
                                 case "c":
                                     responded = True
+                                case _:
+                                    print("Invalid input.")
                     else:
                         editing = False
                         self.save_secret(fields)
@@ -126,7 +128,7 @@ class PasswordManager:
         }
         self.sm_client.create_secret(**secret)
         print(
-            f"Credential {fields['credential_name']['content']} saved to SecretsManager."
+            f"Credential \"{fields['credential_name']['content']}\" saved to SecretsManager."
         )
 
     def retrive_secret(self, credential_name: str) -> dict | None:
