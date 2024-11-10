@@ -6,7 +6,7 @@ from src.password_manager import (
 )
 from json import loads
 from pytest import mark, fixture, raises
-from unittest.mock import patch, Mock
+from unittest.mock import patch
 from boto3 import client
 from moto import mock_aws
 from os import environ
