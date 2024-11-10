@@ -1,11 +1,7 @@
 from boto3 import client
 from botocore.exceptions import ClientError
-
-# from os import getenv
-from os import environ
 from json import loads, dumps
 from getpass import getpass
-from src.env_setup import set_aws_creds
 from moto import mock_aws
 
 
@@ -14,7 +10,6 @@ class PasswordManager:
     master_credentials = "master_credentials"
 
     def __init__(self):
-        # self.sm_client = client("secretsmanager", environ["AWS_DEFAULT_REGION"])
         self.sm_client = client("secretsmanager", "eu-west-2")
         self.running = False
 
@@ -206,7 +201,6 @@ class PasswordManager:
         assert master_credentials_json["password"] == password
 
     def __call__(self):
-        set_aws_creds()
         self.main_loop()
 
 
@@ -242,8 +236,8 @@ if __name__ == "__main__":
             **{
                 "Name": f"{PasswordManager.sm_dir}{PasswordManager.master_credentials}",
                 "SecretString": f"""{{
-                "username": "mattyc",
-                "password": "passyc"
+                "username": "test",
+                "password": "test"
                 }}
             """,
             }
