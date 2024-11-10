@@ -211,22 +211,39 @@ class Testretrieval:
             "name": "Club Pengiun",
             "username": "icybird87",
             "password": "nootnoot",
-            "url": "clubpenguin.com"
+            "url": "clubpenguin.com",
         }
-        with patch(f"{PATCH_PATH}input", side_effect=[test_credential['name'],"u", test_credential['username'], 'p', test_credential['password'], 'r', test_credential['url'], "s"]):
+        with patch(
+            f"{PATCH_PATH}input",
+            side_effect=[
+                test_credential["name"],
+                "u",
+                test_credential["username"],
+                "p",
+                test_credential["password"],
+                "r",
+                test_credential["url"],
+                "s",
+            ],
+        ):
             test_pm.entry()
-        with patch(f"{PATCH_PATH}input", side_effect=[test_credential['name']]):
+        with patch(f"{PATCH_PATH}input", side_effect=[test_credential["name"]]):
             test_pm.retrieval()
             result = capfd.readouterr().out
-        assert f"Credential {underline(test_credential['name'])}:\nUsername: {test_credential['username']}\nPassword: {test_credential['password']}\nURL: {test_credential['url']}" in result
+        assert (
+            f"Credential {underline(test_credential['name'])}:\nUsername: {test_credential['username']}\nPassword: {test_credential['password']}\nURL: {test_credential['url']}"
+            in result
+        )
+
     @mock_aws
-    @mark.it("Echoes \"No credential found...\" if credential name does not exist")
+    @mark.it('Echoes "No credential found..." if credential name does not exist')
     def test_2(self, test_pm, capfd):
-        test_credential_name = 'Club Penguin'
+        test_credential_name = "Club Penguin"
         with patch(f"{PATCH_PATH}input", side_effect=[test_credential_name]):
             test_pm.retrieval()
             result = capfd.readouterr().out
-        assert f"No credential found with name \"{test_credential_name}\"" in result
+        assert f'No credential found with name "{test_credential_name}"' in result
+
 
 class Testdeletion:
     @mock_aws
